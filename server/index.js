@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("uploads"));
 
 mongoose
-  .connect(process.env.DB_URI, {
+  .connect(process.env.DB_Compass_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

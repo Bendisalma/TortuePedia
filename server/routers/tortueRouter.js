@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { nanoid } from "nanoid";
+import auth from "../middleware/auth.js";
 // import {
 //   createTortue,
 //   deleteTortueById,
@@ -21,8 +22,8 @@ const storage = multer.diskStorage({
 let upload = multer({ storage: storage });
 
 router.post("/", upload.single("image"), API.createTortue);
-router.get("/", API.getAllTortues);
-router.get("/:id", API.findTortueById);
-router.patch("/:id", upload.single("image"), API.updateTortue);
-router.delete("/:id", API.DeleteTortue);
+router.get("/",auth, API.getAllTortues);
+router.get("/:id",auth, API.findTortueById);
+router.patch("/:id",auth, upload.single("image"), API.updateTortue);
+router.delete("/:id",auth, API.DeleteTortue);
 export default router;

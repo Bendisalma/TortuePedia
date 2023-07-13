@@ -5,27 +5,40 @@ import User from "../models/userModel.js";
 
 export class USER {
   static async signup(req, res, next) {
-    bcrypt
-      .hash(req.body.password, 10)
-      .then((hash) => {
-        const user = new User({
-          username: req.body.username,
-          email: req.body.email,
-          password: hash,
-        });
-        user
-          .save()
-          .then(() =>
-            res.status(201).json({
-              message: "Utilisateur créé !",
-            })
-          )
-          .catch((error) => res.status(400).json({ error }));
-      })
-      .catch((error) => {
-        res.status(500).json({ error });
-        
+    try {
+      const { username, email, password } = req.body;
+
+      const user = new User({
+        username,
+        email,
+        password,
       });
+
+      await user.validate(); // Exécuter la validation de l'utilisateur
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+
+      await user.save();
+
+      res.status(201).json({ message: "Utilisateur créé !" });
+    } catch (error) {
+      if (error.name === "ValidationError") {
+        // Gérer les erreurs de validation uniques
+        if (error.errors.email && error.errors.email.kind === "unique") {
+          const existingEmail = error.errors.email.value;
+          const errorMessage = `L'adresse e-mail "${existingEmail}" est déjà utilisée.`;
+          return res.status(400).json({ message: errorMessage });
+        }
+        if (error.errors.username && error.errors.username.kind === "unique") {
+          const existingUsername = error.errors.username.value;
+          const errorMessage = `Le nom d'utilisateur "${existingUsername}" est déjà utilisé.`;
+          return res.status(400).json({ message: errorMessage });
+        }
+      }
+
+      res.status(500).json({ error: "Une erreur s'est produite lors de la création de l'utilisateur." });
+    }
   }
 
   static async login(req, res, next) {
@@ -63,6 +76,14 @@ export class USER {
       });
     } catch (error) {
       res.status(500).json({ error });
+    }
+  }
+  static async getAllUsers(req, res) {
+    try {
+      const users = await User.find();
+      res.status(200).json(users);
+    } catch (error) {
+      res.status(404).json({ message: error.message });
     }
   }
 }
